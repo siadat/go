@@ -269,6 +269,15 @@ func (x *operand) assignableTo(check *Checker, T Type, reason *string) bool {
 	}
 	// Vu is typed
 
+	if Ti, ok := Tu.(*Interface); ok {
+		if err := check.sumTypeAssetion(V, Ti, true); err != nil /* Implements(V, Ti) */ {
+			if reason != nil {
+				*reason = fmt.Sprintf("mismatching sum type (have %s, want a type in %s)", V, Ti)
+			}
+			return false
+		}
+	}
+
 	// x's type V and T have identical underlying types
 	// and at least one of V or T is not a named type
 	if check.identical(Vu, Tu) && (!isNamed(V) || !isNamed(T)) {

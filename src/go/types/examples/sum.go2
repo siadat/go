@@ -1,0 +1,97 @@
+// vim: ft=go
+package pp
+
+type SumSingleType interface {
+	// #type string
+}
+
+type Sum1 interface {
+	// #type string, int
+}
+
+type Sum2 interface {
+	// #type string, int, T1000 // ERROR undeclared name: T1000
+}
+
+type Sum3 interface {
+	// #type string, int,
+} // ERROR expected type, found '\}'
+
+type Interface interface{}
+type T1 struct{}
+type TwithName1 struct{ Name string }
+type TwithName2 struct{ Name string }
+
+type Sum4 interface {
+	// #type string, int, T1, TwithName1
+}
+
+func Handle() {
+	var i Interface
+	switch i.(type) {
+	case string:
+	case float64:
+	}
+	_ = i.(string)
+	_ = i.(float64)
+
+	var z SumSingleType
+	switch z.(type) {
+	case string:
+	case nil:
+	}
+
+	_ = z. /* ERROR PREV_CHAR z \(variable of type SumSingleType\) cannot have dynamic type bool */ (bool)
+
+	var s Sum1
+	switch s.(type) {
+	case string:
+	case int:
+	case nil:
+	}
+
+	switch s. /* ERROR PREV_CHAR case bool not in sum types \[string int\] */ (type) {
+	case string:
+	case int:
+	case bool /* ERROR s \(variable of type Sum1\) cannot have dynamic type bool \(mismatching sum assertion\) */ :
+	case nil:
+	}
+
+	switch s.(type) {
+	case string, int, nil:
+	}
+
+	switch s.(type) {
+	default:
+	}
+
+	switch s. /* ERROR PREV_CHAR missing sum case int */ (type) {
+	case string:
+	case nil:
+	}
+
+	switch s. /* ERROR PREV_CHAR missing sum case nil */ (type) {
+	case string:
+	case int:
+	}
+
+	switch s. /* ERROR PREV_CHAR missing sum case string */ (type) {
+	case nil:
+	case int:
+	}
+
+	s = 5
+	s = "some text"
+	s = nil
+	s = 3.14 // ERROR cannot use 3.14
+
+	_ = s.(int)
+	_ = s.(string)
+	_ = s. /* ERROR PREV_CHAR s \(variable of type Sum1\) cannot have dynamic type bool */ (bool)
+
+	var ss Sum4
+	ss = T1{}
+	ss = TwithName1{Name: "name"}
+	ss = TwithName2 /* ERROR cannot use \(TwithName2 literal\) \(value of type TwithName2\) as Sum4 value in assignment: mismatching sum type */ {Name: "name"}
+	_ = ss
+}

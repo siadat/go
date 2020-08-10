@@ -126,6 +126,24 @@ func (check *Checker) stmtList(ctxt stmtContext, list []ast.Stmt) {
 	}
 }
 
+func (check *Checker) hasDefaults(list []ast.Stmt) bool {
+	for _, s := range list {
+		switch c := s.(type) {
+		case *ast.CaseClause:
+			if len(c.List) == 0 {
+				return true
+			}
+		case *ast.CommClause:
+			if c.Comm == nil {
+				return true
+			}
+		default:
+			check.invalidAST(s.Pos(), "case/communication clause expected")
+		}
+	}
+	return false
+}
+
 func (check *Checker) multipleDefaults(list []ast.Stmt) {
 	var first ast.Stmt
 	for _, s := range list {
@@ -677,6 +695,41 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 			}
 		}
 
+		{
+			var typs []Type
+			switch t := xtyp.allTypes.(type) {
+			case nil:
+			case *Sum:
+				typs = t.types
+			default:
+				typs = []Type{t}
+			}
+
+			if len(typs) > 0 {
+				if !check.hasDefaults(s.Body.List) {
+					for _, typ := range typs {
+						if _, ok := seen[typ]; !ok {
+							check.errorf(x.pos(), "missing sum case %s in type switch", typ)
+						}
+					}
+					if _, ok := seen[nil]; !ok {
+						check.errorf(x.pos(), "missing sum case %s in type switch", "nil")
+					}
+				}
+			L:
+				for typ := range seen {
+					if typ == nil {
+						continue L
+					}
+					for _, t := range typs {
+						if t == typ {
+							continue L
+						}
+					}
+					check.errorf(x.pos(), "case %s not in sum types %s", typ, typs)
+				}
+			}
+		}
 	case *ast.SelectStmt:
 		inner |= breakOk
 

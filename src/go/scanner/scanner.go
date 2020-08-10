@@ -14,6 +14,7 @@ import (
 	"go/token"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -885,14 +886,27 @@ scanAgain:
 					s.insertSemi = false // newline consumed
 					return pos, token.SEMICOLON, "\n"
 				}
+
+				offs := s.offset - 1
+
 				comment := s.scanComment()
 				if s.mode&ScanComments == 0 {
 					// skip comment
 					s.insertSemi = false // newline consumed
 					goto scanAgain
 				}
-				tok = token.COMMENT
-				lit = comment
+
+				if strings.HasPrefix(comment, "// #type ") {
+					// TODO: are these correct?
+					s.ch = 't'
+					s.offset = offs + len("// #")
+					s.rdOffset = offs + len("// #")
+
+					goto scanAgain
+				} else {
+					tok = token.COMMENT
+					lit = comment
+				}
 			} else {
 				tok = s.switch2(token.QUO, token.QUO_ASSIGN)
 			}

@@ -1694,6 +1694,12 @@ func keyVal(x constant.Value) interface{} {
 
 // typeAssertion checks that x.(T) is legal; xtyp must be the type of x.
 func (check *Checker) typeAssertion(pos token.Pos, x *operand, xtyp *Interface, T Type, strict bool) {
+	err := check.sumTypeAssetion(T, xtyp, false)
+	if err != nil {
+		msg := fmt.Sprintf("mismatching sum assertion")
+		check.errorf(pos, "%s cannot have dynamic type %s (%s)", x, T, msg)
+	}
+
 	method, wrongType := check.assertableTo(xtyp, T, strict)
 	if method == nil {
 		return

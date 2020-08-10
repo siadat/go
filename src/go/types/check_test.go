@@ -71,7 +71,7 @@ func parseFiles(t *testing.T, filenames []string) ([]*ast.File, []error) {
 	var files []*ast.File
 	var errlist []error
 	for _, filename := range filenames {
-		file, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
+		file, err := parser.ParseFile(fset, filename, nil, parser.AllErrors|parser.ParseComments)
 		if file == nil {
 			t.Fatalf("%s: %s", filename, err)
 		}
@@ -95,7 +95,7 @@ func parseFiles(t *testing.T, filenames []string) ([]*ast.File, []error) {
 // for error messages that are located immediately after rather than
 // at a token's position.
 //
-var errRx = regexp.MustCompile(`^ *ERROR *(HERE)? *"?([^"]*)"?`)
+var errRx = regexp.MustCompile(`^ *ERROR *(HERE|PREV_CHAR)? *"?([^"]*)"?`)
 
 // errMap collects the regular expressions of ERROR comments found
 // in files and returns them as a map of error positions to error messages.
@@ -130,6 +130,9 @@ func errMap(t *testing.T, testname string, files []*ast.File) map[string][]strin
 					pos := prev
 					if s[1] == "HERE" {
 						pos = here
+					}
+					if s[1] == "PREV_CHAR" {
+						pos = pos - 1
 					}
 					p := fset.Position(pos).String()
 					errmap[p] = append(errmap[p], strings.TrimSpace(s[2]))

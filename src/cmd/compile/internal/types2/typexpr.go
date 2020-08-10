@@ -133,10 +133,6 @@ func (check *Checker) varType(e syntax.Expr) Type {
 		// interface methods. Delay this check to the end of type-checking.
 		check.atEnd(func() {
 			check.completeInterface(e.Pos(), t) // TODO(gri) is this the correct position?
-			if t.allTypes != nil {
-				check.softErrorf(e.Pos(), "interface type for variable cannot contain type constraints (%s)", t.allTypes)
-				return
-			}
 			if t.IsComparable() {
 				check.softErrorf(e.Pos(), "interface type for variable cannot be (or embed) comparable")
 			}

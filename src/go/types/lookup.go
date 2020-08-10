@@ -6,7 +6,10 @@
 
 package types
 
-import "go/token"
+import (
+	"fmt"
+	"go/token"
+)
 
 // LookupFieldOrMethod looks up a field or method with given package and name
 // in T and returns the corresponding *Var or *Func, an index sequence, and a
@@ -422,6 +425,27 @@ func (check *Checker) missingMethod(V Type, T *Interface, static bool) (method, 
 	}
 
 	return
+}
+
+func (check *Checker) sumTypeAssetion(V Type, T *Interface, static bool) error {
+	check.completeInterface(token.NoPos, T)
+
+	switch t := T.allTypes.(type) {
+	case nil:
+		return nil
+	case *Sum:
+		for _, typ := range t.types {
+			if typ == V {
+				return nil
+			}
+		}
+	default:
+		if t == V {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("no matching type")
 }
 
 // assertableTo reports whether a value of type V can be asserted to have type T.
