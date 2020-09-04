@@ -708,7 +708,14 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 			if len(typs) > 0 {
 				if !check.hasDefaults(s.Body.List) {
 					for _, typ := range typs {
-						if _, ok := seen[typ]; !ok {
+						isSeen := false
+						for seenTyp := range seen {
+							if Identical(seenTyp, typ) {
+								isSeen = true
+								break
+							}
+						}
+						if !isSeen {
 							check.errorf(x.pos(), "missing sum case %s in type switch", typ)
 						}
 					}
@@ -722,7 +729,7 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 						continue L
 					}
 					for _, t := range typs {
-						if t == typ {
+						if Identical(t, typ) {
 							continue L
 						}
 					}

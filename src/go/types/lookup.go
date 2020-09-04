@@ -435,12 +435,12 @@ func (check *Checker) sumTypeAssetion(V Type, T *Interface, static bool) error {
 		return nil
 	case *Sum:
 		for _, typ := range t.types {
-			if typ == V {
+			if Identical(typ, V) {
 				return nil
 			}
 		}
 	default:
-		if t == V {
+		if Identical(t, V) {
 			return nil
 		}
 	}
